@@ -35,32 +35,24 @@ public class SQLStorageProvider implements StorageProvider {
         int port = config.getInt("port", 3306);
         String driver = config.getString("driver-class", "com.mysql.jdbc.Driver");
         table = config.getString("table", "nicknames");
-        try {
-            HikariConfig hikariConfig = new HikariConfig();
-            hikariConfig.setDriverClassName(driver);
-            hikariConfig.setJdbcUrl(
-                    "jdbc:mysql://" +
-                            url +
-                            ":" +
-                            port +
-                            "/" +
-                            database
-            );
-            hikariConfig.addDataSourceProperty("serverName", url);
-            hikariConfig.addDataSourceProperty("port", port);
-            hikariConfig.addDataSourceProperty("databaseName", database);
-            hikariConfig.addDataSourceProperty("user", user);
-            hikariConfig.addDataSourceProperty("password", password);
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setDriverClassName(driver);
+        hikariConfig.setJdbcUrl("jdbc:mysql://" + url + ":" + port + "/" + database);
+        hikariConfig.addDataSourceProperty("serverName", url);
+        hikariConfig.addDataSourceProperty("port", port);
+        hikariConfig.addDataSourceProperty("databaseName", database);
+        hikariConfig.addDataSourceProperty("user", user);
+        hikariConfig.addDataSourceProperty("password", password);
 
-            hikariConfig.setConnectionTimeout(config.getLong("connection-timeout", 30000));
-            hikariConfig.setIdleTimeout(config.getLong("idle-timeout", 600000));
-            hikariConfig.setMaxLifetime(config.getLong("max-lifetime", 1800000));
+        hikariConfig.setConnectionTimeout(config.getLong("connection-timeout", 30000));
+        hikariConfig.setIdleTimeout(config.getLong("idle-timeout", 600000));
+        hikariConfig.setMaxLifetime(config.getLong("max-lifetime", 1800000));
 
-            dataSource = new HikariDataSource(hikariConfig);
+        dataSource = new HikariDataSource(hikariConfig);
 
-            // contents are bytes
-            String sql = "CREATE TABLE IF NOT EXISTS " + table + "(UUID varchar(255), nickname varchar(255))";
-            PreparedStatement statement = dataSource.getConnection().prepareStatement(sql);
+        // contents are bytes
+        String sql = "CREATE TABLE IF NOT EXISTS " + table + "(UUID varchar(255), nickname varchar(255))";
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(sql);) {
             statement.execute();
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -77,9 +69,7 @@ public class SQLStorageProvider implements StorageProvider {
     @Override
     public void save(UUID uuid, String nickname) {
         String selectSQL = "SELECT * FROM " + table + " WHERE UUID = ?";
-        try {
-            Connection connection = dataSource.getConnection();
-            PreparedStatement selectStatement = connection.prepareStatement(selectSQL);
+        try (Connection connection = dataSource.getConnection(); PreparedStatement selectStatement = connection.prepareStatement(selectSQL)) {
             selectStatement.setString(1, uuid.toString());
             selectStatement.execute();
             if (selectStatement.getResultSet().next()) {
@@ -102,9 +92,8 @@ public class SQLStorageProvider implements StorageProvider {
 
     @Override
     public String load(UUID uuid) {
-        try {
-            String sql = "SELECT nickname FROM " + table + " WHERE UUID = ?";
-            PreparedStatement statement = dataSource.getConnection().prepareStatement(sql);
+        String sql = "SELECT nickname FROM " + table + " WHERE UUID = ?";
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, uuid.toString());
             statement.execute();
             if (!statement.getResultSet().next()) {
@@ -118,9 +107,8 @@ public class SQLStorageProvider implements StorageProvider {
 
     @Override
     public void delete(UUID uuid) {
-        try {
-            String sql = "DELETE FROM " + table + " WHERE UUID = ?";
-            PreparedStatement statement = dataSource.getConnection().prepareStatement(sql);
+        String sql = "DELETE FROM " + table + " WHERE UUID = ?";
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, uuid.toString());
             statement.execute();
         } catch (SQLException e) {
