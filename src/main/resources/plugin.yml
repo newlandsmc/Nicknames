@@ -1,0 +1,19 @@
+name: Nicknames
+version: '${version}'
+main: com.superminecraftservers.nicknames.Nicknames
+api-version: "1.19"
+depend:
+  - PlaceholderAPI
+commands:
+  nickname:
+    permission: nicknames.use
+    aliases: [ nick, nicks, nicknames ]
+    description: Set/reset a nickname
+    usage: /<command> set/reset <username> [nickname]
+permissions:
+  nicknames.use:
+    default: op
+    description: Allows the use of the /nickname command
+  nicknames.regex.bypass:
+    default: op
+    description: Allows the use of any nickname

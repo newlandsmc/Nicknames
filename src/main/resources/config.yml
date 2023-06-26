@@ -1,0 +1,4 @@
+allowed-regex: '' # Java style regex (PCRE) empty = allow all
+
+cache:
+  enabled: true
